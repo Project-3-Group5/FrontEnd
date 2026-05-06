@@ -303,13 +303,3 @@ body {
     color: rgba(156, 163, 175, 1);
     line-height: 1.5;
 }
-
-.form-checkbox a {
-    color: rgba(243, 244, 246, 1);
-    text-decoration: none;
-}
-
-.form-checkbox a:hover {
-    text-decoration: underline;
-    text-decoration-color: rgba(167, 139, 250, 1);
-}
