@@ -102,6 +102,7 @@ export default function LoginPage() {
                     <div className="input-group">
                         <label>Username</label>
                         <input
+                            placeholder="Username"
                             value={form.username}
                             onChange={(e) => setForm({ ...form, username: e.target.value })}
                         />
@@ -110,6 +111,7 @@ export default function LoginPage() {
                     <div className="input-group">
                         <label>Password</label>
                         <input
+                            placeholder="Password"
                             type={showPassword ? "text" : "password"}
                             value={form.password}
                             onChange={(e) => setForm({ ...form, password: e.target.value })}
