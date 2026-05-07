@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function LoginScreen() {
     const router = useRouter();
 
@@ -11,16 +13,76 @@ export default function LoginScreen() {
     const [password, setPassword] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [loading, setLoading] = useState(false);
+
+//     const handleSubmit = async () => {
+//         if (!username || !password) return;
+//
+//         const displayName =
+//             tab === "signup" ? `${firstName} ${lastName}` : username;
+//
+//         await AsyncStorage.setItem("username", displayName);
+//
+//         router.replace("/(tabs)");
+//     };
+
+//     const handleSubmit = async () => {
+//         if (!username || !password) return;
+//
+//         try {
+//             const response = await fetch(`${BASE_URL}/users`);
+//             const users = await response.json();
+//
+//             // Simple check: Find user where username matches
+//             const user = users.find((u: any) => u.username === username);
+//
+//             if (user) {
+//                 // Store ID for profile and username for display
+//                 await AsyncStorage.setItem("userId", user.id.toString());
+//                 await AsyncStorage.setItem("username", user.username);
+//                 router.replace("/(tabs)");
+//             } else {
+//                 alert("User not found");
+//             }
+//         } catch (error) {
+//             console.error("Login failed", error);
+//         }
+//     };
 
     const handleSubmit = async () => {
-        if (!username || !password) return;
+        setLoading(true); // Start a spinner
+        try {
+            // Create an AbortController to handle long waits if desired
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-        const displayName =
-            tab === "signup" ? `${firstName} ${lastName}` : username;
+            console.log(BASE_URL)
 
-        await AsyncStorage.setItem("username", displayName);
+            const response = await fetch(`${BASE_URL}/users`, { signal: controller.signal });
+            clearTimeout(timeoutId);
 
-        router.replace("/(tabs)");
+            const users = await response.json();
+
+            const user = users.find((u: any) => u.username === username);
+
+            if (user) {
+                // Store ID for profile and username for display
+                await AsyncStorage.setItem("userId", user.id.toString());
+                await AsyncStorage.setItem("username", user.username);
+                router.replace("/(tabs)");
+            } else {
+                alert("User not found");
+            }
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                alert("The server is taking a while to wake up. Please try again in a moment.");
+            } else {
+                alert("Connection error. Ensure the backend is live.");
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

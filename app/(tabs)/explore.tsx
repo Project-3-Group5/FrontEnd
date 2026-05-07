@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { getSkills } from "../../api";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 
-const demoSkills = [
-    { id: 1, name: "React", category: "Programming", description: "Build frontend apps." },
-    { id: 2, name: "Java", category: "Programming", description: "Backend programming." },
-    { id: 3, name: "Guitar", category: "Music", description: "Learn chords and songs." },
-];
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function SkillsScreen() {
-    const [skills, setSkills] = useState(demoSkills);
+    const [skills, setSkills] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         loadSkills();
@@ -17,29 +14,58 @@ export default function SkillsScreen() {
 
     const loadSkills = async () => {
         try {
-            const data = await getSkills();
+            setLoading(true);
+            setError(false);
 
-            if (data && data.length > 0) {
-                setSkills(data);
-            }
+            const response = await fetch(`${BASE_URL}/skill`);
+
+            if (!response.ok) throw new Error("Failed to fetch");
+
+            const data = await response.json();
+            setSkills(data);
         } catch (err) {
-            console.log(err);
-            setSkills(demoSkills);
+            console.error("Error fetching skills:", err);
+            setError(true);
+        } finally {
+            setLoading(false);
         }
     };
 
-    return (
-        <View style={styles.page}>
-            <Text style={styles.title}>Skills</Text>
+    if (loading) {
+        return (
+            <View style={styles.page}>
+                <ActivityIndicator size="large" color="#a78bfa" />
+                <Text style={styles.statusText}>Loading skills from Render...</Text>
+            </View>
+        );
+    }
 
-            {skills.map((skill) => (
-                <View key={skill.id} style={styles.card}>
-                    <Text style={styles.name}>{skill.name}</Text>
-                    <Text style={styles.category}>{skill.category}</Text>
-                    <Text style={styles.description}>{skill.description}</Text>
-                </View>
-            ))}
-        </View>
+    return (
+        <ScrollView style={styles.page} contentContainerStyle={{ paddingBottom: 40 }}>
+            <Text style={styles.title}>Explore Skills</Text>
+
+            {error && (
+                <Text style={styles.errorText}>
+                    Could not connect to the server. Please try again.
+                </Text>
+            )}
+
+            {skills.length === 0 && !error ? (
+                <Text style={styles.statusText}>No skills found in the database.</Text>
+            ) : (
+                skills.map((skill) => (
+                    <View key={skill.id} style={styles.card}>
+                        <Text style={styles.name}>{skill.name}</Text>
+                        {/* Note: Ensure your backend Skill model has 'category' and 'description'
+                            fields, otherwise these will simply render empty/null */}
+                        <Text style={styles.category}>{skill.category || "General"}</Text>
+                        <Text style={styles.description}>
+                            {skill.description || "No description provided."}
+                        </Text>
+                    </View>
+                ))
+            )}
+        </ScrollView>
     );
 }
 
@@ -70,11 +96,23 @@ const styles = StyleSheet.create({
         fontWeight: "700",
     },
     category: {
-        color: "#9ca3af",
+        color: "#a78bfa", // Changed to match theme
+        fontSize: 14,
+        fontWeight: "600",
         marginTop: 4,
     },
     description: {
         color: "#9ca3af",
         marginTop: 6,
     },
+    statusText: {
+        color: "#9ca3af",
+        textAlign: "center",
+        marginTop: 20,
+    },
+    errorText: {
+        color: "#f87171",
+        textAlign: "center",
+        marginBottom: 20,
+    }
 });
